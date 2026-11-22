@@ -22,6 +22,7 @@ window.addEventListener('keydown', (event) => {
   keys.add(key === ' ' ? 'space' : key);
   if (state.mode === 'title' && (key === 'enter' || key === ' ')) startRun();
   if ((state.mode === 'won' || state.mode === 'busted') && key === 'r') startRun();
+  if (state.mode === 'play' && (key === 'p' || key === 'escape')) state.paused = !state.paused;
 });
 window.addEventListener('keyup', (event) => {
   const key = event.key.toLowerCase();
@@ -35,6 +36,7 @@ canvas.addEventListener('pointerdown', () => {
 function freshState() {
   return {
     mode: 'title',
+    paused: false,
     t: 0,
     elapsed: 0,
     player: new Player(PLAYER_START),
@@ -265,12 +267,26 @@ const shotParam = Number(params.get('shot'));
 const inShotMode = Number.isInteger(shotParam) && shotParam >= 1 && shotParam <= 4;
 if (inShotMode) applyShot(shotParam);
 
+function drawPaused() {
+  ctx.fillStyle = 'rgba(3, 5, 12, 0.72)';
+  ctx.fillRect(0, 72, canvas.width, canvas.height - 72);
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#2fe6ff';
+  ctx.font = '900 48px system-ui, sans-serif';
+  ctx.fillText('PAUSED', canvas.width / 2, 330);
+  ctx.fillStyle = '#2fe6a8';
+  ctx.font = '800 20px system-ui, sans-serif';
+  ctx.fillText('Press P to resume', canvas.width / 2, 378);
+  ctx.textAlign = 'left';
+}
+
 let last = performance.now();
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000);
   last = now;
-  if (!inShotMode) update(dt);
+  if (!inShotMode && !state.paused) update(dt);
   render(ctx, state);
+  if (state.paused && state.mode === 'play') drawPaused();
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
